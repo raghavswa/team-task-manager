@@ -12,6 +12,7 @@ import toast from 'react-hot-toast';
 export default function ProjectsPage() {
   const qc = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
+  const [search, setSearch] = useState('');
 
   const { data, isLoading } = useQuery({
     queryKey: ['projects'],
@@ -29,53 +30,64 @@ export default function ProjectsPage() {
     onError: (err) => toast.error(getApiError(err)),
   });
 
+  const filtered = (data || []).filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return <div className="flex items-center justify-center h-64"><LoadingSpinner size="lg" /></div>;
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="flex items-center justify-between mb-6">
+    <div className="max-w-7xl mx-auto animate-fade-in">
+      {/* Header */}
+      <div className="page-header">
         <div>
-          <h2 className="text-xl font-bold text-gray-900">Projects</h2>
-          <p className="text-sm text-gray-500 mt-0.5">{data?.length || 0} projects</p>
+          <h2 className="page-title">Projects</h2>
+          <p className="page-subtitle">{data?.length || 0} projects in your workspace</p>
         </div>
         <button className="btn-primary" onClick={() => setShowCreate(true)}>
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
           New Project
         </button>
       </div>
 
-      {data?.length === 0 ? (
+      {/* Search */}
+      {(data?.length ?? 0) > 0 && (
+        <div className="relative mb-6 max-w-sm">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            className="input pl-9 py-2"
+            placeholder="Search projects…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      )}
+
+      {filtered.length === 0 && !search ? (
         <EmptyState
           icon="📁"
           title="No projects yet"
           description="Create your first project to start organizing tasks with your team."
-          action={
-            <button className="btn-primary" onClick={() => setShowCreate(true)}>
-              Create Project
-            </button>
-          }
+          action={<button className="btn-primary" onClick={() => setShowCreate(true)}>Create your first project</button>}
         />
+      ) : filtered.length === 0 ? (
+        <EmptyState icon="🔍" title="No results" description={`No projects match "${search}"`} />
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {data.map((project) => (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          {filtered.map((project) => (
             <ProjectCard key={project.id} project={project} />
           ))}
         </div>
       )}
 
-      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="New Project">
-        <ProjectForm
-          onSubmit={(payload) => createMutation.mutate(payload)}
-          loading={createMutation.isPending}
-        />
+      <Modal isOpen={showCreate} onClose={() => setShowCreate(false)} title="Create New Project">
+        <ProjectForm onSubmit={(p) => createMutation.mutate(p)} loading={createMutation.isPending} />
       </Modal>
     </div>
   );

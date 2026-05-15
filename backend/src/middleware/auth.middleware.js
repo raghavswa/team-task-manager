@@ -6,16 +6,13 @@ const { User, ProjectMember } = require('../models');
 // Express 5: async middleware errors are automatically forwarded to the error handler
 
 /**
- * Verify JWT access token and attach user to request
+ * Verify JWT access token and attach user to request.
  */
 const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({
-      success: false,
-      message: 'Access token required.',
-    });
+    return res.status(401).json({ success: false, message: 'Access token required.' });
   }
 
   const token = authHeader.split(' ')[1];
@@ -40,8 +37,22 @@ const authenticate = async (req, res, next) => {
 };
 
 /**
- * Check if user is an admin of the given project.
- * Requires authenticate middleware to run first and req.params.projectId or req.params.id to be set.
+ * System-level: only superadmins can proceed.
+ * Must run after authenticate.
+ */
+const requireSuperAdmin = (req, res, next) => {
+  if (req.user.systemRole !== 'superadmin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Super admin access required.',
+    });
+  }
+  next();
+};
+
+/**
+ * Project-level: only project admins can proceed.
+ * Must run after authenticate.
  */
 const requireProjectAdmin = async (req, res, next) => {
   const projectId = req.params.projectId || req.params.id;
@@ -61,7 +72,8 @@ const requireProjectAdmin = async (req, res, next) => {
 };
 
 /**
- * Check if user is a member (any role) of the given project.
+ * Project-level: any project member can proceed.
+ * Must run after authenticate.
  */
 const requireProjectMember = async (req, res, next) => {
   const projectId = req.params.projectId || req.params.id;
@@ -80,4 +92,9 @@ const requireProjectMember = async (req, res, next) => {
   next();
 };
 
-module.exports = { authenticate, requireProjectAdmin, requireProjectMember };
+module.exports = {
+  authenticate,
+  requireSuperAdmin,
+  requireProjectAdmin,
+  requireProjectMember,
+};

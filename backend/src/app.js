@@ -65,8 +65,8 @@ app.use('/api/projects', projectRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 
-// 404 — Express 5 requires named wildcards
-app.use('/(*splat)', notFound);
+// 404 — catch-all for unmatched routes
+app.use('/{*path}', notFound);
 
 // Global error handler (Express 5 auto-forwards async errors)
 app.use(errorHandler);
