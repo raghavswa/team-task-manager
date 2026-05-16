@@ -3,7 +3,7 @@
 A full-stack web application for managing projects, assigning tasks, and tracking progress with role-based access control.
 
 ## Live URL
-> To be updated after Railway deployment
+> https://team-task-manager-dgiv.onrender.com
 
 ## Features
 
